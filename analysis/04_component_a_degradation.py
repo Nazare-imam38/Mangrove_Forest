@@ -3,79 +3,84 @@ import numpy as np
 import rasterio
 from rasterio.transform import from_origin
 
-# --- Component A: Mangrove Degradation Severity Mapping ---
-# Core Thesis: Maps degradation severity within standing cover using SAR backscatter intensity gradients
-# See: Goldberg et al. (2020) - Extent vs Degradation. 
-# See: Zhao & Qin (2020) - SAR proxy.
+# --- Component A: Mangrove Degradation Severity Mapping (Refined) ---
+# Thesis: Maps structural degradation severity within standing cover using SAR-Optical fusion.
+# RFDI formula derived from Datta et al. (2022).
 
-def create_mock_raster(path, value, shape=(500, 500)):
-    """Helper to generate dummy rasters so the pipeline can execute end-to-end without real data."""
+def create_mock_raster(path, count=1, shape=(500, 500)):
+    """Helper to generate spatial stack for test execution."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     transform = from_origin(118.7, 10.0, 0.0001, 0.0001)
     profile = {
-        'driver': 'GTiff', 'height': shape[0], 'width': shape[1], 'count': 1,
-        'dtype': rasterio.float32, 'transform': transform
+        'driver': 'GTiff', 'height': shape[0], 'width': shape[1], 'count': count,
+        'dtype': rasterio.float32, 'transform': transform, 'crs': 'EPSG:4326'
     }
     with rasterio.open(path, 'w', **profile) as dst:
-        data = (np.random.rand(*shape) * value).astype(rasterio.float32)
-        dst.write(data, 1)
+        for i in range(1, count + 1):
+            data = np.random.rand(*shape).astype(rasterio.float32)
+            dst.write(data, i)
     return profile
 
 def map_degradation_severity(s1_sar_raster, s2_ndvi_raster, gmw_mask, output_path):
-    print("--- Running Component A: Core Scientific Engine ---")
+    print("\n--- Running Component A: Palawan Degradation Engine ---")
     
-    # 1. Fallback / Test-run generator
+    # 1. Pipeline check / Test data generation
     if not os.path.exists(s1_sar_raster):
-        print("Real raster missing. Synthesizing dummy data to build pipeline architecture...")
-        profile = create_mock_raster(s1_sar_raster, 1.0)
-        create_mock_raster(s2_ndvi_raster, 0.8)
-        create_mock_raster(gmw_mask, 1.0) # Mask: 1s and 0s
+        print("Missing spatial inputs. Synthesizing PALAWAN_SAR_AOI test stacks...")
+        create_mock_raster(s1_sar_raster, count=2) # VV, VH
+        create_mock_raster(s2_ndvi_raster, count=1) 
+        create_mock_raster(gmw_mask, count=1)
         
-    # 2. Ingest Data
-    print(f"Loading S1 SAR backscatter: {s1_sar_raster}")
-    with rasterio.open(s1_sar_raster) as s1:
-        sar_data = s1.read(1)
-        profile = s1.profile
-        
-    with rasterio.open(s2_ndvi_raster) as s2:
-        ndvi_data = s2.read(1)
-        
-    with rasterio.open(gmw_mask) as gm:
-        mangrove_mask = gm.read(1)
+    # 2. Ingest Multi-Sensor Data
+    try:
+        with rasterio.open(s1_sar_raster) as s1:
+            vv = s1.read(1)
+            vh = s1.read(2)
+            profile = s1.profile
+            
+        with rasterio.open(s2_ndvi_raster) as s2:
+            ndvi = s2.read(1)
+            
+        with rasterio.open(gmw_mask) as gm:
+            mangrove_mask = gm.read(1)
+    except Exception as e:
+        print(f"Ingestion failed: {e}")
+        return
 
-    # 3. Apply Structural Logic (The core thesis)
-    print("Masking non-mangrove areas using GMW 2020 baseline...")
-    # Keep only areas defined as mangrove
-    sar_masked = np.where(mangrove_mask > 0.5, sar_data, np.nan)
-    ndvi_masked = np.where(mangrove_mask > 0.5, ndvi_data, np.nan)
+    # 3. Core Structural Analysis (RFDI Logic)
+    # Higher RFDI indicates greater structural loss relative to intact canopy
+    rfdi = (vv - vh) / (vv + vh + 1e-6)
     
-    print("Calculating structural degradation severity using backscatter gradients (VV + VH)...")
-    # Pseudo-formula: High SAR backscatter variance + low NDVI = structural degradation
-    # In reality, this would be a Random Forest probability. Simulated formula:
-    degradation_severity = (sar_masked * 0.7) - (ndvi_masked * 0.3)
+    # 4. Multi-Sensor Fusion
+    # Severity is high where structural loss (RFDI) coincides with low leaf health (1-NDVI)
+    severity = rfdi * (1.0 - ndvi)
     
-    # Normalize index to 0-1 (0 = intact, 1 = severely degraded)
-    valid_mask = ~np.isnan(degradation_severity)
-    if valid_mask.any():
-        d_min, d_max = np.nanmin(degradation_severity), np.nanmax(degradation_severity)
-        degradation_index = (degradation_severity - d_min) / (d_max - d_min)
+    # Restrict to established Mangrove baseline
+    final_map = np.where(mangrove_mask > 0.5, severity, np.nan)
+    
+    # 5. Normalization
+    valid = ~np.isnan(final_map)
+    if valid.any():
+        v_min, v_max = np.nanmin(final_map), np.nanmax(final_map)
+        degraded_index = (final_map - v_min) / (v_max - v_min + 1e-6)
     else:
-        degradation_index = degradation_severity
+        degraded_index = final_map
         
-    # 4. Output formulation
-    print(f"Exporting degradation severity GeoTIFF: {output_path}")
+    # 6. Export Results
+    print(f"Exporting severity surface: {os.path.basename(output_path)}")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
     profile.update(dtype=rasterio.float32, count=1, nodata=np.nan)
     with rasterio.open(output_path, 'w', **profile) as dst:
-        dst.write(degradation_index.astype(rasterio.float32), 1)
+        dst.write(degraded_index.astype(rasterio.float32), 1)
         
-    print("Component A complete. Degradation raster is ready for Component B & C.")
+    print("Component A complete. Structural loss surface generated.")
 
 if __name__ == "__main__":
     map_degradation_severity(
-        s1_sar_raster="../data/processed/s1_sar_2024.tif",
-        s2_ndvi_raster="../data/processed/s2_ndvi_2024.tif",
-        gmw_mask="../data/baselines/GMW_2020.tif",
-        output_path="../data/outputs/degradation_severity_map.tif"
+        s1_sar_raster="data/processed/s1_sar_2024.tif",
+        s2_ndvi_raster="data/processed/s2_ndvi_2024.tif",
+        gmw_mask="data/baselines/GMW_2020.tif",
+        output_path="data/outputs/degradation_severity_map.tif"
     )
+

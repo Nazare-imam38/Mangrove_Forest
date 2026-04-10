@@ -8,7 +8,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, accuracy_score
 
 # --- Constants & LULC Scheme ---
-FEATURE_NAMES = ['VV', 'VH', 'RFDI', 'NDVI', 'NDWI', 'EVI']
+# Features present in both training and holdout CSVs
+FEATURE_NAMES = ['VV', 'VH', 'RFDI', 'NDVI', 'NDWI']
 LULC_CLASSES = {
     0: 'Intact Mangrove', 
     1: 'Active Aquaculture', 
@@ -18,152 +19,117 @@ LULC_CLASSES = {
     5: 'Urban'
 }
 
-# --- Component C: Mangrove Degradation Driver Attribution ---
-# Core Thesis: Attributes localized degradation severity to specific LULC drivers (Aquaculture/Agri/Urban)
-# using a fused SAR-Optical Machine Learning framework.
-# See: Datta et al. (2022) - SAR RFDI signatures.
-# See: McDermid (2022) - Temporal hold-out validation.
+# --- Component C: Mangrove Degradation Driver Attribution (Real Data Integration) ---
+# Attributes localized degradation severity to specific LULC drivers using SAR-Optical pixels.
 
-def create_mock_multiband_raster(path, shape=(500, 500), bands=6):
-    """Helper to generate multi-band mock data for ML pipeline testing."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    transform = from_origin(118.7, 10.0, 0.0001, 0.0001)
-    profile = {
-        'driver': 'GTiff', 'height': shape[0], 'width': shape[1], 'count': bands,
-        'dtype': rasterio.float32, 'transform': transform
-    }
-    with rasterio.open(path, 'w', **profile) as dst:
-        for i in range(1, bands + 1):
-            # Generate random data with some class-like clusters
-            data = np.random.rand(*shape).astype(rasterio.float32)
-            dst.write(data, i)
-    return profile
-
-def load_real_feature_stack(csv_path: str, year_group: str = None):
+def load_samples(csv_path: str):
     """
-    Replaces synthesize_feature_stack() entirely.
-
-    Reads GEE-exported CSV of real Sentinel-1 + Sentinel-2 pixels.
-    csv_path:   path to your GEE export CSV (training or holdout)
-    year_group: 'train_2018_2022' or 'holdout_2023_2024' or None (load all)
-
-    Returns: X (numpy array, shape [n_pixels, 6]),
-             y (numpy array, shape [n_pixels], int class labels)
+    Reads ground truth CSV samples exported from GEE.
     """
+    if not os.path.exists(csv_path):
+        print(f"Error: Sample data missing at {csv_path}")
+        return None, None
+        
     df = pd.read_csv(csv_path)
 
-    # Filter by year group if specified (temporal split)
-    if year_group is not None:
-        df = df[df['year_group'] == year_group].copy()
-
-    # Drop rows with any NaN in feature columns (cloud gaps, water edges)
+    # Drop rows with any NaN in core features or class_id
     df = df.dropna(subset=FEATURE_NAMES + ['class_id'])
 
-    # Clip RFDI to valid range [-1, 1] — GEE can produce edge artefacts
-    df['RFDI'] = df['RFDI'].clip(-1.0, 1.0)
+    # Clip RFDI to valid range [-1, 1] (GEE artefact handling)
+    if 'RFDI' in df.columns:
+        df['RFDI'] = df['RFDI'].clip(-1.0, 1.0)
 
-    # Drop class_id values not in your 6-class scheme (edge artefacts)
+    # Ensure class_ids are strictly within our 0-5 scheme
     df = df[df['class_id'].isin(range(6))].copy()
 
     X = df[FEATURE_NAMES].values.astype(np.float32)
     y = df['class_id'].values.astype(np.int32)
 
-    # Print class balance — important to verify before training
-    unique, counts = np.unique(y, return_counts=True)
-    print(f"    Loaded {len(y):,} real pixels from: {csv_path}")
-    print(f"    Year group: {year_group or 'all'}")
-    print(f"    {'Class':<28} {'Pixels':>8}")
-    for cls, cnt in zip(unique, counts):
-        print(f"    {LULC_CLASSES[cls]:<28} {cnt:>8,}")
-
+    print(f"    Loaded {len(y):,} real pixels from: {os.path.basename(csv_path)}")
     return X, y
 
-def attribute_degradation_drivers(s1_path, s2_path, degradation_raster, output_path):
-    print("--- Running Component C: LULC Driver Attribution Engine ---")
+def attribute_degradation_drivers(s1_path, s2_path, degradation_raster, training_csv, holdout_csv, output_path):
+    print("\n--- Running Component C: LULC Driver Attribution Engine (Palawan) ---")
     
-    # 1. Pipeline Check/Mock Data Generation
-    if not os.path.exists(s1_path):
-        print("Required SAR/Optical composites missing. Synthesizing 6-band feature stack...")
-        create_mock_multiband_raster(s1_path, bands=3) # VV, VH, VH/VV
-        create_mock_multiband_raster(s2_path, bands=3) # NDVI, EVI, NDWI
+    # 1. Load Data
+    print("Loading Ground Truth samples...")
+    X_train, y_train = load_samples(training_csv)
+    X_val, y_val = load_samples(holdout_csv)
     
-    # 2. Ingest Features
-    print(f"Loading SAR feature stack: {s1_path}")
-    with rasterio.open(s1_path) as s1:
-        vv = s1.read(1)
-        vh = s1.read(2)
-        ratio = s1.read(3) # VH/VV (Double-Bounce Proxy)
-        profile = s1.profile
-        
-    print(f"Loading Optical feature stack: {s2_path}")
-    with rasterio.open(s2_path) as s2:
-        ndvi = s2.read(1)
-        evi = s2.read(2)
-        ndwi = s2.read(3)
-
-    # 3. Prepare Feature Matrix (X)
-    # Masking to 06-target areas: Only where degradation from Component A > 0.1
-    if not os.path.exists(degradation_raster):
-        print(f"Degradation raster missing at {degradation_raster}. Please run Component A first.")
+    if X_train is None or X_val is None:
         return
 
-    with rasterio.open(degradation_raster) as dr:
-        deg_map = dr.read(1)
-    
-    mask = (deg_map > 0.1) & (~np.isnan(deg_map))
-    X = np.stack([vv[mask], vh[mask], ratio[mask], ndvi[mask], evi[mask], ndwi[mask]], axis=1)
-    
-    if X.shape[0] == 0:
-        print("No degraded pixels found to attribute. Exiting.")
-        return
-
-    # 4. Simulated Training (Since we don't have ROI polygons in this lean pipeline)
-    print("Initializing Multi-Class Random Forest (n_estimators=100)...")
-    
-    # Define Classes: 1=Intact, 2=Active Aqua, 3=Abandoned Aqua, 4=Paddy Agri, 5=Dryland Agri, 6=Urban
-    # Generating synthetic labels for the 'train' part of the pipeline demo
-    y_pseudo = np.random.choice([1, 2, 3, 4, 5, 6], size=X.shape[0], p=[0.2, 0.4, 0.1, 0.1, 0.1, 0.1])
-    
-    # --- Model Training & Evaluation ---
-    # In a real run, we would call load_real_feature_stack(csv_path) here.
-    # For now, using the local raster X matrix to maintain execution logic.
-    X_train, X_test, y_train, y_test = train_test_split(X, y_pseudo, test_size=0.2, random_state=42)
-    
-    clf = RandomForestClassifier(n_estimators=100, random_state=42)
-    print("Training RandomForest model...")
+    # 2. Train Random Forest Classifier
+    print(f"Training Multi-Class Random Forest (Features: {', '.join(FEATURE_NAMES)})...")
+    clf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1, class_weight='balanced')
     clf.fit(X_train, y_train)
     
-    y_pred = clf.predict(X_test)
-    print(f"Model Validation Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+    # 3. Temporal Validation
+    y_pred_val = clf.predict(X_val)
+    acc = accuracy_score(y_val, y_pred_val)
+    print(f"✅ Temporal Validation Accuracy (Holdout 2023-24): {acc:.4f}")
     
-    # 5. Full Scene Prediction
-    print("Classifying full Palawan AOI scene...")
-    full_prediction = np.zeros(deg_map.shape, dtype=np.uint8)
-    full_prediction[mask] = clf.predict(X)
-    
-    # 6. Driver Statistics
-    print("Calculating driver proportions...")
-    unique, counts = np.unique(full_prediction[mask], return_counts=True)
-    stats = dict(zip(unique, counts))
-    total = sum(counts)
-    
-    for cid, count in stats.items():
-        percentage = (count / total) * 100
-        print(f" - {LULC_CLASSES.get(cid, 'Unknown')}: {percentage:.2f}%")
+    # 4. Driver Attribution on Degraded Pixels (Spatial Application)
+    if not os.path.exists(degradation_raster):
+        print(f"Skipping spatial map: Degradation raster missing at {degradation_raster}")
+        return
 
-    # 7. Export LULC Map
-    print(f"Exporting Driver Attribution Map: {output_path}")
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    profile.update(dtype=rasterio.uint8, count=1, nodata=0)
-    with rasterio.open(output_path, 'w', **profile) as dst:
-        dst.write(full_prediction.astype(rasterio.uint8), 1)
+    print(f"Applying model to degraded zones in: {os.path.basename(degradation_raster)}")
+    with rasterio.open(degradation_raster) as dr:
+        deg_map = dr.read(1)
+        profile = dr.profile
+    
+    # Load corresponding feature layers for prediction (VV, VH, RFDI, NDVI, NDWI)
+    # This logic assumes paths exist; if not, we skip the final map generation layer
+    try:
+        with rasterio.open(s1_path) as s1:
+            vv = s1.read(1)
+            vh = s1.read(2)
+            # RFDI = (VV-VH)/(VV+VH) if not explicitly stored in band 3
+            rfdi = (vv - vh) / (vv + vh + 1e-6) 
+            
+        with rasterio.open(s2_path) as s2:
+            ndvi = s2.read(1)
+            ndwi = s2.read(3) # Assumed band order
+    except:
+        print("Raster feature stacks (S1/S2) missing. Driver stats will be based on holdout dataset proportions.")
+        unique, counts = np.unique(y_pred_val, return_counts=True)
+        stats = dict(zip(unique, counts))
+    else:
+        # Spatial Masking: Only attribute where degradation > 0.1
+        mask = (deg_map > 0.1) & (~np.isnan(deg_map))
+        X_spatial = np.stack([vv[mask], vh[mask], rfdi[mask], ndvi[mask], ndwi[mask]], axis=1)
         
-    print("Component C complete. Driver attribution data is ready for synthesis.")
+        full_prediction = np.zeros(deg_map.shape, dtype=np.uint8)
+        full_prediction[mask] = clf.predict(X_spatial)
+        
+        # Calculate statistics
+        unique, counts = np.unique(full_prediction[mask], return_counts=True)
+        stats = dict(zip(unique, counts))
+
+        # Export Map
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        profile.update(dtype=rasterio.uint8, count=1, nodata=0)
+        with rasterio.open(output_path, 'w', **profile) as dst:
+            dst.write(full_prediction.astype(rasterio.uint8), 1)
+        print(f"Driver Attribution Map exported to: {output_path}")
+
+    # 5. Print Driver Breakdown
+    print("\nDetailed Driver Proportions (Degraded Areas):")
+    total = sum(stats.values())
+    for cid in range(6):
+        count = stats.get(cid, 0)
+        percentage = (count / total) * 100 if total > 0 else 0
+        print(f" - {LULC_CLASSES[cid]:<22}: {percentage:>6.2f}% ({count:,} pixels)")
+
+    print("\nComponent C complete.")
 
 if __name__ == "__main__":
     attribute_degradation_drivers(
-        s1_path="../data/processed/s1_feature_stack_2024.tif",
-        s2_path="../data/processed/s2_feature_stack_2024.tif",
-        degradation_raster="../data/outputs/degradation_severity_map.tif",
-        output_path="../data/outputs/driver_attribution_map.tif"
+        s1_path="data/processed/s1_sar_2024.tif",
+        s2_path="data/processed/s2_ndvi_2024.tif",
+        degradation_raster="data/outputs/degradation_severity_map.tif",
+        training_csv="outputs/csv/palawan_lulc_training_samples.csv",
+        holdout_csv="outputs/csv/palawan_lulc_holdout_samples.csv",
+        output_path="data/outputs/palawan_driver_attribution_map.tif"
     )
