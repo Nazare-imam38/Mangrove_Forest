@@ -1,0 +1,352 @@
+/* ===== VIEW TRANSITIONS ===== */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 0.25s;
+  animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+/* ===== RESET & VARIABLES ===== */
+:root {
+    --bg:           #ffffff;
+    --bg-subtle:    #f8f9fa;
+    --text:         #1a202c;
+    --text-muted:   #4a5568;
+    --text-light:   #a0aec0;
+    --border:       #e2e8f0;
+    --border-dark:  #cbd5e0;
+    --accent:       #2563eb;
+    --accent-dark:  #1d4ed8;
+
+    --font-body:    'Merriweather', Georgia, serif;
+    --font-ui:      'Inter', Arial, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+/* ===== JOURNAL NAV BAR ===== */
+.journal-nav {
+    background: #1a1a2e;
+    color: #f0f0f0;
+    padding: 0.5rem 2rem;
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 3px solid var(--accent);
+}
+.nav-content {
+    display: flex;
+    justify-content: space-between;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+.article-meta { color: #90caf9; }
+
+/* ===== HERO — Clean Academic Header ===== */
+.hero {
+    background: var(--bg);
+    border-bottom: 2px solid var(--border);
+    padding: 3.5rem 2rem;
+    display: flex;
+    justify-content: center;
+}
+.hero-overlay { display: none; }
+.hero-container { max-width: 900px; width: 100%; }
+
+.title-glass {
+    background: var(--bg);
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.tag {
+    display: inline-block;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: #e7f1ff;
+    padding: 0.2rem 0.65rem;
+    border-radius: 4px;
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+}
+
+.hero h1 {
+    font-family: var(--font-ui);
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #0d1117;
+    margin-bottom: 1.25rem;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 1.25rem;
+}
+
+.authors {
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 0.2rem;
+}
+.institutions {
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* ===== MAIN BODY ===== */
+.paper-body {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 3rem;
+}
+
+/* ─── Sidebar ─── */
+.academic-sidebar {
+    position: sticky;
+    top: 3rem;
+    height: max-content;
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
+}
+
+.sidebar-block.glass-card {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.academic-sidebar h4 {
+    font-family: var(--font-ui);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-bottom: 0.65rem;
+}
+
+.academic-sidebar p {
+    color: var(--text);
+    margin-bottom: 0.35rem;
+    font-size: 0.82rem;
+}
+
+.academic-sidebar hr {
+    border: 0;
+    height: 1px;
+    background: var(--border);
+    margin: 1rem 0;
+}
+
+.academic-sidebar ul { list-style: none; }
+.academic-sidebar a {
+    text-decoration: none;
+    color: var(--text-muted);
+    display: block;
+    padding: 0.2rem 0;
+    transition: color 0.15s;
+    border-left: 2px solid transparent;
+    padding-left: 0.5rem;
+}
+.academic-sidebar a:hover {
+    color: var(--accent);
+    border-left-color: var(--accent);
+}
+
+/* ─── Manuscript ─── */
+.manuscript {
+    background: var(--bg);
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border-left: 1px solid var(--border);
+    padding-left: 3rem;
+}
+
+/* ─── Sections ─── */
+.section { margin-bottom: 3rem; }
+
+.glass-emphasis {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 4px;
+    padding: 1.5rem 1.75rem;
+}
+
+.section h2 {
+    font-family: var(--font-ui);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0d1117;
+    margin-bottom: 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--border);
+}
+
+.section h3 {
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 2rem 0 0.75rem 0;
+}
+
+.section p {
+    margin-bottom: 1rem;
+    text-align: justify;
+    hyphens: auto;
+}
+
+.section code {
+    background: #f0f3f7;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.88em;
+    color: #c0392b;
+    border: 1px solid var(--border);
+}
+
+/* ===== GLASS CARD — Now just a plain academic box ===== */
+.glass-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    backdrop-filter: none;
+}
+
+/* Flowchart container */
+.flowchart-container {
+    overflow: hidden;
+}
+
+/* ===== RESULTS — Charts ===== */
+.interactive-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.chart-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s;
+}
+.chart-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.chart-card h4 {
+    font-family: var(--font-ui);
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.chart-wrapper {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+}
+
+.caption {
+    margin-top: 0.75rem !important;
+    font-family: var(--font-ui) !important;
+    font-size: 0.78rem !important;
+    color: var(--text-muted) !important;
+    text-align: center !important;
+    line-height: 1.4;
+    border-top: 1px solid var(--border);
+    padding-top: 0.65rem;
+}
+
+/* ===== MAP CONTAINERS ===== */
+#studyAreaMap, #lulcMap {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+
+/* ===== MERMAID FLOWCHART ===== */
+.mermaid svg { max-width: 100%; height: auto; }
+
+/* ===== REFERENCES ===== */
+#references ol {
+    font-family: var(--font-ui);
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.65;
+}
+
+/* ===== FOOTER ===== */
+.paper-footer {
+    text-align: center;
+    padding: 1.5rem 2rem;
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    border-top: 2px solid var(--border);
+    background: var(--bg-subtle);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+    .paper-body {
+        grid-template-columns: 1fr;
+    }
+    .academic-sidebar {
+        position: static;
+    }
+    .manuscript {
+        border-left: none;
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .interactive-grid {
+        grid-template-columns: 1fr;
+    }
+    .hero h1 { font-size: 1.5rem; }
+    .paper-body { padding: 1.5rem 1rem; }
+}
