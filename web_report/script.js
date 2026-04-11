@@ -203,6 +203,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- SCIENTIFIC GIS SHOWCASE (Python-Calculated Buffers) ---
+    const gisShowcaseMap = L.map('gisShowcaseMap').setView([10.198, 118.885], 12);
+    
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri', maxZoom: 18
+    }).addTo(gisShowcaseMap);
+
+    // Origin Marker (Site of degradation)
+    L.marker([10.198, 118.885]).addTo(gisShowcaseMap)
+        .bindPopup("<b>Degradation Nucleus</b><br>Python-Calculated Spatial Origin");
+
+    // Calculated Buffers from Python Engine (Sampled coordinates)
+    const bufferStyles = {
+        2:  { color: '#ef4444', weight: 2, fillOpacity: 0.15, dashArray: '1' }, // 2km
+        5:  { color: '#f59e0b', weight: 2, fillOpacity: 0.10, dashArray: '5, 5' }, // 5km
+        10: { color: '#3b82f6', weight: 1.5, fillOpacity: 0.05, dashArray: '10, 5' } // 10km
+    };
+
+    // Coordinate snippets calculated in analysis/10_gis_processing_engine.py
+    const ring2km = [[10.215, 118.885], [10.210, 118.900], [10.198, 118.903], [10.186, 118.899], [10.180, 118.885], [10.186, 118.870], [10.198, 118.866], [10.210, 118.872], [10.215, 118.885]];
+    const ring5km = [[10.242, 118.885], [10.232, 118.913], [10.198, 118.930], [10.163, 118.913], [10.153, 118.885], [10.163, 118.856], [10.198, 118.839], [10.232, 118.856], [10.242, 118.885]];
+    const ring10km = [[10.287, 118.885], [10.261, 118.949], [10.198, 118.976], [10.134, 118.949], [10.108, 118.885], [10.134, 118.820], [10.198, 118.793], [10.261, 118.820], [10.287, 118.885]];
+
+    L.polygon(ring2km,  bufferStyles[2]).addTo(gisShowcaseMap).bindPopup("2km Connectivity Ring");
+    L.polygon(ring5km,  bufferStyles[5]).addTo(gisShowcaseMap).bindPopup("5km Connectivity Ring");
+    L.polygon(ring10km, bufferStyles[10]).addTo(gisShowcaseMap).bindPopup("10km Connectivity Ring");
+
+    // Add Scale
+    L.control.scale().addTo(gisShowcaseMap);
+
     // --- LEAFLET GIS INITIALIZATION ---
     const map = L.map('studyAreaMap').setView([10.0, 118.7], 8);
     
@@ -224,68 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
     L.circle([10.5, 119.1], {color:'#10b981', fillColor:'#10b981', fillOpacity:0.3, radius:9000})
         .addTo(map).bindPopup("Intact Core Mangrove Reserve");
 
-    // --- LULC CLASSIFICATION MAP (SVM Systematic Raster Grid) ---
-    // Simulating the contiguous classification surface output from the model
-    const lulcMap = L.map('lulcMap').setView([10.198, 118.885], 15);
-    
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri', maxZoom: 18
-    }).addTo(lulcMap);
-
-    const LULC_COLORS = {
-        MNG: '#16a34a', // Dark Green: Mangrove
-        AQU: '#ef4444', // Red: Aquaculture
-        AGR: '#ca8a04', // Amber: Agriculture
-        URB: '#64748b', // Slate: Urban
-        WAT: '#0ea5e9'  // Sky Blue: Water
-    };
-
-    // Parameters for valid land-mass mask simulation
-    const gridStep = 0.00085; // Roughly 90m pixel resolution
-    const startL = 10.190, endL = 10.208;
-    const startW = 118.875, endW = 118.895;
-
-    for (let lat = startL; lat < endL; lat += gridStep) {
-        for (let lon = startW; lon < endW; lon += gridStep) {
-            let color, label, opacity = 0.7;
-
-            // SVM logic simulation: based on longitude and coastal geometry
-            if (lon > 118.892) { 
-                color = LULC_COLORS.WAT; label = "Open Water"; opacity = 0.35;
-            } else if (lon > 118.888) {
-                color = LULC_COLORS.MNG; label = "Intact Mangrove";
-            } else if (lon > 118.884) {
-                color = LULC_COLORS.AQU; label = "Aquaculture Pond";
-            } else {
-                if (Math.random() > 0.88) {
-                    color = LULC_COLORS.URB; label = "Urban Encroachment";
-                } else {
-                    color = LULC_COLORS.AGR; label = "Agriculture Land";
-                }
-            }
-
-            L.rectangle([[lat, lon], [lat + gridStep, lon + gridStep]], {
-                color: 'white', weight: 0.1, fillOpacity: opacity, fillColor: color
-            }).addTo(lulcMap).bindPopup(`<b>SVM Classification Result</b><br>Class: ${label}<br>Confidence: 97.6%`);
-        }
-    }
-
-
-    // ── Custom Legend ──────────────────────────────────────────────────────────
-    const legend = L.control({position: 'bottomright'});
-    legend.onAdd = function() {
-        const div = L.DomUtil.create('div');
-        div.style.cssText = 'background:white;padding:10px;border:1px solid #ccc;border-radius:4px;font-family:Inter,sans-serif;font-size:12px;line-height:1.8;';
-        div.innerHTML = `
-            <b style="display:block;margin-bottom:4px;">SVM Classification</b>
-            <span style="color:${C.MNG};">■</span> Intact Mangrove<br>
-            <span style="color:${C.AQU};">■</span> Aquaculture<br>
-            <span style="color:${C.AGR};">■</span> Agriculture<br>
-            <span style="color:${C.URB};">■</span> Urban / Built-up<br>
-            <span style="color:${C.WAT};">■</span> Open Water`;
-        return div;
-    };
-    legend.addTo(lulcMap);
 
 });
 

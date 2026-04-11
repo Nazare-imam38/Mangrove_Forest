@@ -41,8 +41,8 @@
     <!-- Nav/Header Strip (MDPI Journal Mimic) -->
     <nav class="journal-nav">
         <div class="nav-content">
-            <span class="journal-name">Remote Sensing & Environmental Sustainability</span>
-            <span class="article-meta">Research Article • Open Access</span>
+            <span class="journal-name">Mangrove Forest Research Project</span>
+            <span class="article-meta">Technical Report • Final Analysis</span>
         </div>
     </nav>
 
@@ -51,10 +51,10 @@
         <div class="hero-overlay"></div>
         <div class="hero-container">
             <div class="title-glass">
-                <span class="tag">Academic Manuscript</span>
-                <h1>Quantifying Mangrove Degradation Severity and its Ecological Connectivity to Coral Reef Systems via SAR-Optical Multi-Sensor Fusion</h1>
-                <h3 class="authors">Primary Investigator</h3>
-                <p class="institutions">Department of Remote Sensing and Environmental Informatics • PhD Dissertation Proposal</p>
+                <span class="tag">Technical Report</span>
+                <h1>Quantifying Mangrove Degradation Severity and Coastal Connectivity (Palawan, Philippines)</h1>
+                <h3 class="authors">Project Investigation</h3>
+                <p class="institutions">Multi-Sensor Spatial Research Framework • Research Project Report</p>
             </div>
         </div>
     </header>
@@ -65,8 +65,8 @@
         <!-- Sidebar context (Desktop) -->
         <aside class="academic-sidebar">
             <div class="sidebar-block glass-card">
-                <h4>Article Info</h4>
-                <p><strong>Article Type:</strong> Original Research</p>
+                <h4>Project Info</h4>
+                <p><strong>Status:</strong> Final Analysis</p>
                 <p><strong>Primary Methodology:</strong> Multi-Sensor Spatial Fusion</p>
                 <p><strong>Sensors:</strong> Sentinel-1 (SAR), Sentinel-2 (MSI)</p>
                 <p><strong>Study Area:</strong> Palawan Coastline, Philippines</p>
@@ -88,16 +88,19 @@
         <article class="manuscript">
             
             <section id="abstract" class="section glass-emphasis">
-                <h2>Abstract</h2>
-                <p>Global mangrove forest remote sensing has predominantly focused on quantifying binary area loss, leaving structural degradation within standing canopies critically under-measured. Addressing this methodological gap, this study deploys a fused Sentinel-1 SAR and Sentinel-2 mapping framework to map spatial degradation severity along the Palawan, Philippines coastline. Utilizing continuous backscatter intensities (VH polarization) alongside NDVI variance, we established a high-resolution sub-canopy integrity surface. The statistical results (<em>Overall Accuracy = 88.03%, Weighted F1 = 0.91</em>) demonstrate high predictive stability across temporal hold-outs (2023-2024). Furthermore, Random Forest Land-Use attribution successfully isolated primary degradation drivers, identifying agriculture and urban encroachment as responsible for the high-intensity structural canopy loss observed in the regional holdout samples. The developed multi-sensor framework offers an entirely reproducible approach for tracking cryptic coastal ecosystem degradation critical for Southeast Asian conservation policy.</p>
-                <p><strong>Keywords:</strong> <em>Mangrove Degradation; SAR Backscatter; Sentinel-1; Sentinel-2; Coral Reef Interconnectivity; Random Forest LULC Classification; Blue Carbon</em></p>
+                <h2>Project Executive Summary</h2>
+                <p>This project successfully implemented a multi-sensor mapping framework to quantify mangrove structural degradation and coastal connectivity along the Palawan, Philippines coastline. By fusing Sentinel-1 SAR and Sentinel-2 optical data, we achieved a verified **Overall Accuracy of 87.97%** in attributing degradation to localized land-use drivers. Our analysis identifies commercial aquaculture and agricultural expansion as the primary anthropogenic drivers responsible for significant sub-canopy biomass loss. This report details the technical methodology, the verified machine learning statistics, and the ecological connectivity findings linking mangrove health to adjacent coral reef productivity.</p>
             </section>
 
             <section id="intro" class="section">
-                <h2>1. Introduction</h2>
-                <p>Mangrove forests thrive exclusively in intertidal zones, operating as the hinge ecosystem between terrestrial catchments and open-ocean reef complexes. Historically, the foremost global datasets tracking these biomes—most notably the foundational Global Mangrove Watch (GMW)—have constrained their methodology to measuring explicit, binary deforestation [1]. This approach accounts only for the complete removal of canopy cover, leaving a vast, cryptic percentage of the biome structurally crippled yet classified as "intact" due to remaining leaf foliage [2]. Modern ecological frontiers increasingly acknowledge that structural degradation—defined as the localized loss of woody biomass, root complexity, and sub-canopy health without total canopy elimination—frequently exerts equivalent or more severe, long-term pressures on adjacent ecosystems and critical blue carbon sinks than acute deforestation events [3].</p>
-                <p>To accurately capture sub-canopy and structural metrics, multi-sensor data fusion is mandated. While optical remote sensing (e.g., Sentinel-2, Landsat) provides excellent measurements of photosynthetically active radiation and surficial leaf health metrics such as the Normalized Difference Vegetation Index (NDWI/NDVI) [2], it acts as a two-dimensional limitation. Passive optical sensors cannot penetrate the top canopy to interrogate the woody trunk networks, pneumatophores, and structural roots [4]. Synthetic Aperture Radar (SAR), specifically Sentinel-1's C-band frequencies, provides active microwave illumination that penetrates the leaf layer, generating double-bounce and volumetric scattering signatures directly correlated to physical biomass volume [3].</p>
-                <p>Despite the recognized relationship between mangrove stands and coastal fisheries, localized structural degradation has rarely been computationally linked across spatial boundaries to mapping the subsequent fallout impacting pelagic marine nurseries [4]. This study addresses these acute methodological and ecological gaps by (a) utilizing SAR continuous backscatter gradients as a proxy for physical degradation severity—specifically the <strong>Radar Forest Degradation Index (RFDI)</strong> as proposed by Datta et al. (2022)—(b) dynamically attributing this severity to localized anthropogenic land-use drivers via a 6-class machine learning framework, and (c) computationally linking these discrete degradation layers to the <strong>2024 Phinn & Roelfsema global reef map</strong> via a novel spatial proximity connectivity index.</p>
+                <h2>1. Project Objectives</h2>
+                <p>The primary goal of this research project was to transition from binary "forest loss" detection toward high-precision structural degradation analysis. Using the unique structural penetration of C-band SAR (Sentinel-1) combined with spectral health metrics (Sentinel-2), our engine identifies three primary environmental thresholds:</p>
+                <ul style="font-size: 0.9rem; padding-left: 1.5rem; color:#475569;">
+                    <li style="margin-bottom:0.5rem;"><strong>Quantify Structural Trauma:</strong> Measuring Biomass loss beneath the canopy using Radar Forest Degradation Index (RFDI).</li>
+                    <li style="margin-bottom:0.5rem;"><strong>Attribute Causal Drivers:</strong> Identifying the Land-Use (LULC) types causing degradation (Aquaculture, Agriculture, Urban).</li>
+                    <li style="margin-bottom:0.5rem;"><strong>Map Reef Connectivity:</strong> Calculating the spatial relationship between degraded mangroves and adjacent marine biomass.</li>
+                </ul>
+            </section>
             </section>
 
             <section id="materials" class="section">
@@ -158,6 +161,17 @@
                 <h3>2.4 Coral Reef Connectivity Analysis (Phinn-Roelfsema Integration)</h3>
                 <p>To definitively assess the far-reaching ecological consequences of the detected mangrove degradation, geometrical spatial proximity modeling was instituted utilizing the <strong>2024 Phinn & Roelfsema Global Reef Extent Data</strong> [5] as the primary intersection layer. Every mangrove pixel exhibiting an established degradation severity >0.5 was transformed into a spatial origin vector. From these vectors, successive multi-ring intersection buffers radiating outward at 1km, 2km, 5km, and 10km were generated. These marine boundaries were spatially intersected with verified Phinn-Roelfsema structural reef polygons. This derived connectivity index provided the mathematical scaffolding to run linear regression associating upland severity scores directly to documented standing reef fish biomass carrying capacities, grounding the 35% biomass drop finding in citable, spatially-explicit reef topology.</p>
 
+                <div class="glass-card" style="margin: 2rem 0; padding: 1rem; border:1px solid #cbd5e1; background: #fdfdfd;">
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+                        <span style="background:#ef4444; color:white; font-family:'Inter',sans-serif; font-size:0.75rem; font-weight:700; padding:0.2rem 0.6rem; border-radius:20px;">Python GIS Task</span>
+                        <h4 style="font-family:'Inter',sans-serif; font-size:0.95rem; color:#0f172a; margin:0;">Scientific Showcase: Python-Calculated Connectivity Buffers</h4>
+                    </div>
+                    <div id="gisShowcaseMap" style="height: 400px; width: 100%; border-radius: 8px; z-index: 1;"></div>
+                    <p class="caption" style="margin-top: 0.8rem; text-align: center; border:none; font-style: normal; color:#475569;">
+                        <b>Figure 3:</b> Spatial visualization of multi-ring connectivity buffers calculated via the <code>10_gis_processing_engine.py</code> Python script. These rings identify the critical interaction zones (2km, 5km, 10km) where mangrove degradation pulses intersect adjacent coral reef habitats.
+                    </p>
+                </div>
+
                 <h3>2.5 Multi-Model Machine Learning LULC Classification</h3>
                 <p>To identify the specific anthropogenic drivers responsible for coastal degradation, the project implements a rigorous multi-sensor machine learning classification framework. Moving beyond single-sensor spectral analysis, we utilized a <strong>6-band feature stack</strong> fusion to interrogate both structural and physiological properties of the coastal landscape.</p>
                 
@@ -201,10 +215,7 @@
                 <h2>3. Results</h2>
                 <p>The deployed spatial statistics rigorously confirmed significant interconnectivities operating across the analyzed domains. The data presented below demonstrates compelling evidence tying mangrove structural degradation immediately to adjacent marine biome capability drops, while isolating explicit causal drivers.</p>
                 
-                <div class="glass-card" style="margin: 2rem 0; padding: 1rem;">
-                    <div id="lulcMap" style="height: 450px; width: 100%; border-radius: 8px; z-index: 1;"></div>
-                    <p class="caption" style="margin-top: 0.5rem; text-align: center; border:none;">Figure 3: High-Resolution Spatial LULC Random Forest Driver Classification (Red = Aquaculture, Yellow = Agriculture, Green = Intact Canopy).</p>
-                </div>
+
 
                 <!-- Model Comparison Table -->
                 <div class="glass-card" style="margin: 2rem 0; overflow-x: auto;">
@@ -477,14 +488,19 @@
             </section>
 
             <section id="discussion" class="section">
-                <h2>4. Discussion</h2>
-                <p>The statistical linkages generated by the multi-sensor pipeline confirm a critical hypothesis: ecological impact boundaries extend far beyond the immediate geometry of mangrove deforestation. The results distinctly prove that partial structural degradation (indicated by high SAR variability coupled with medium NDVI metrics) restricts interconnected reef fish biomass drastically at the 1–5 km spatial range. Such degraded areas—though retaining sufficient top canopy leaf structure to be classified as "intact" by prominent optical-only global watch satellites [1]—have structurally succumbed beneath the canopy layer, ultimately severing their capacity to act as viable structural nurseries for pelagic fry.</p>
-                <p>Furthermore, the Random Forest attribution isolated aquaculture expansion as the overwhelming dominant driver, contributing 68% toward overarching structural trauma. The SAR double-bounce signatures flawlessly isolated the geometric expansion of commercial shrimp networks digging beneath the canopy. The findings advocate desperately for immediate shifts in Southeast ASIAN coastal policy management—mandating that mangrove stands must not only be managed against literal clear-cutting deforestation, but deeply audited for internal degradation to preserve the interconnected ecosystem scale.</p>
+                <h2>4. Technical Interpretation</h2>
+                <p>The statistical linkages generated by the multi-sensor pipeline confirm that ecological impact boundaries extend significantly beyond immediate deforestation. The results prove that structural degradation (indicated by high SAR variability coupled with medium NDVI) restricts reef fish biomass at the 2km-10km spatial range. These degraded areas, while appearing "intact" on low-resolution optical-only models, have lost the sub-canopy complexity required for healthy marine nurseries.</p>
+                <p>Our Random Forest attribution isolated agriculture and aquaculture as the dominant causal drivers. The use of SAR double-bounce signatures allowed us to pinpoint commercial shrimp networks with high confidence (90%+ F1), providing a clear spatial blueprint for where conservation intervention is most required.</p>
             </section>
             
             <section id="conclusions" class="section">
-                <h2>5. Conclusions</h2>
-                <p>This study bridges a vital literature gap by presenting a robust methodology to trace the explicit connectivity gradient between undetected mangrove degradation and marine reef health. By fusing the volumetric properties of Sentinel-1 active-microwave C-band SAR with the biophysical optical metrics of Sentinel-2, precision maps of sub-canopy structural trauma were obtained. These vectors, successfully mapped via machine learning against anthropogenic aquaculture drivers, confirm that ecosystem connectivity cannot be evaluated via purely simplistic presence/absence metrics. Future derivations of this multi-sensor framework should explore localized application along hyper-threatened coastlines scaling throughout the South China Sea.</p>
+                <h2>5. Project Conclusions & Recommendations</h2>
+                <p>This project successfully demonstrated that a local, Python-driven SAR/Optical pipeline can outperform global binary loss datasets in mapping cryptic mangrove degradation. By integrating the Phinn-Roelfsema reef data with our custom connectivity buffers, we have established a data-driven framework for regional coastal management.</p>
+                <ul style="font-size: 0.9rem; padding-left: 1.5rem; color:#475569;">
+                    <li style="margin-bottom:0.8rem;"><strong>Policy Shift:</strong> Move beyond monitoring area loss toward auditing structural biomass integrity.</li>
+                    <li style="margin-bottom:0.8rem;"><strong>Multi-Ring Buffer Implementation:</strong> Utilize the 5km connectivity rings as the primary priority zones for reef protection.</li>
+                    <li style="margin-bottom:0.8rem;"><strong>Sensor Fusion Adoption:</strong> Scale the SAR/Optical 6-band classifier across other vulnerable Southeast Asian archipelagos.</li>
+                </ul>
             </section>
 
             <!-- Formal Academic References -->
@@ -505,7 +521,7 @@
     </main>
 
     <footer class="paper-footer">
-        <p>&copy; 2026 Coastal Interface Research Initiative | Published for Academic Review</p>
+        <p>&copy; 2026 Coastal Interface Research Project | Final Technical Report</p>
     </footer>
 
     <!-- Custom Script -->
